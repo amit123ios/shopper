@@ -427,7 +427,7 @@ export const registerDeliveryBoy = async (req: Request, res: Response) => {
             delivery 
         });
     }catch(err: any){
-        //res.status(500).json({error : err.message});
+        res.status(500).json({error : "ssssssssssss"});
     }
 }
 
