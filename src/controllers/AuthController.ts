@@ -303,7 +303,7 @@ export const createBaseUser = async (
     );
 
     if (existing.rows.length > 0) {
-        const err: any = new Error("Email or phone already registered");
+        const err: any = new Error("Emailaa or phone already registered");
         err.statusCode = 409;
         throw err;
     }
@@ -427,7 +427,7 @@ export const registerDeliveryBoy = async (req: Request, res: Response) => {
             delivery 
         });
     }catch(err: any){
-        res.status(500).json({error : "ssssssssssss"});
+        res.status(500).json({error : err.message});
     }
 }
 
