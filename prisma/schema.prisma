@@ -1,0 +1,525 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model attributes {
+  id                               BigInt                             @id @default(autoincrement())
+  name                             String                             @db.VarChar(255)
+  created_at                       DateTime?                          @db.Timestamp(0)
+  updated_at                       DateTime?                          @db.Timestamp(0)
+  product_variant_attribute_values product_variant_attribute_values[]
+}
+
+model cache {
+  key        String @id @db.VarChar(255)
+  value      String
+  expiration Int
+}
+
+model cache_locks {
+  key        String @id @db.VarChar(255)
+  owner      String @db.VarChar(255)
+  expiration Int
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model categories {
+  id                  BigInt                @id @default(autoincrement())
+  name                String                @unique(map: "categories_name_unique") @db.VarChar(255)
+  slug                String                @unique(map: "categories_slug_unique") @db.VarChar(255)
+  created_at          DateTime?             @db.Timestamp(0)
+  updated_at          DateTime?             @db.Timestamp(0)
+  image               String?
+  status              String                @default("inactive") @db.VarChar(255)
+  category_shop       category_shop[]
+  category_shop_type  category_shop_type[]
+  category_shop_types category_shop_types[]
+  products            products[]
+}
+
+model category_shop {
+  id          BigInt     @id @default(autoincrement())
+  category_id BigInt
+  shop_id     BigInt
+  created_at  DateTime?  @db.Timestamp(0)
+  updated_at  DateTime?  @db.Timestamp(0)
+  categories  categories @relation(fields: [category_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "category_shop_category_id_foreign")
+  shops       shops      @relation(fields: [shop_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "category_shop_shop_id_foreign")
+
+  @@unique([category_id, shop_id], map: "category_shop_category_id_shop_id_unique")
+}
+
+model category_shop_type {
+  id           BigInt     @id @default(autoincrement())
+  category_id  BigInt
+  shop_type_id BigInt
+  created_at   DateTime?  @db.Timestamp(0)
+  updated_at   DateTime?  @db.Timestamp(0)
+  categories   categories @relation(fields: [category_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "category_shop_type_category_id_foreign")
+  shop_types   shop_types @relation(fields: [shop_type_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "category_shop_type_shop_type_id_foreign")
+
+  @@unique([category_id, shop_type_id], map: "category_shop_type_category_id_shop_type_id_unique")
+}
+
+model category_shop_types {
+  id           BigInt     @id @default(autoincrement())
+  category_id  BigInt
+  shop_type_id BigInt
+  created_at   DateTime?  @db.Timestamp(0)
+  updated_at   DateTime?  @db.Timestamp(0)
+  categories   categories @relation(fields: [category_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "category_shop_types_category_id_foreign")
+  shop_types   shop_types @relation(fields: [shop_type_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "category_shop_types_shop_type_id_foreign")
+
+  @@unique([category_id, shop_type_id], map: "category_shop_types_category_id_shop_type_id_unique")
+}
+
+model cities {
+  id                 BigInt               @id @default(autoincrement())
+  name               String               @db.VarChar(255)
+  state_id           BigInt
+  created_at         DateTime?            @db.Timestamp(0)
+  updated_at         DateTime?            @db.Timestamp(0)
+  states             states               @relation(fields: [state_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "cities_state_id_foreign")
+  customer_addresses customer_addresses[]
+  localities         localities[]
+}
+
+model countries {
+  id                 BigInt               @id @default(autoincrement())
+  name               String               @db.VarChar(255)
+  code               String?              @db.VarChar(5)
+  created_at         DateTime?            @db.Timestamp(0)
+  updated_at         DateTime?            @db.Timestamp(0)
+  customer_addresses customer_addresses[]
+  states             states[]
+}
+
+model customer_addresses {
+  id                 BigInt           @id @default(autoincrement())
+  customer_detail_id BigInt
+  type               String?          @db.VarChar(255)
+  address            String           @db.VarChar(255)
+  country_id         BigInt
+  state_id           BigInt
+  city_id            BigInt
+  locality_id        BigInt?
+  pincode_id         BigInt
+  created_at         DateTime?        @db.Timestamp(0)
+  updated_at         DateTime?        @db.Timestamp(0)
+  cities             cities           @relation(fields: [city_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "customer_addresses_city_id_foreign")
+  countries          countries        @relation(fields: [country_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "customer_addresses_country_id_foreign")
+  customer_details   customer_details @relation(fields: [customer_detail_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "customer_addresses_customer_detail_id_foreign")
+  localities         localities?      @relation(fields: [locality_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "customer_addresses_locality_id_foreign")
+  pincodes           pincodes         @relation(fields: [pincode_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "customer_addresses_pincode_id_foreign")
+  states             states           @relation(fields: [state_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "customer_addresses_state_id_foreign")
+}
+
+model customer_details {
+  id                 BigInt               @id @default(autoincrement())
+  user_id            BigInt
+  wallet_balance     Decimal              @default(0) @db.Decimal(10, 2)
+  created_at         DateTime?            @db.Timestamp(0)
+  updated_at         DateTime?            @db.Timestamp(0)
+  customer_addresses customer_addresses[]
+  users              users                @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "customer_details_user_id_foreign")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model delivery_boy_details {
+  id                     BigInt                   @id @default(autoincrement())
+  user_id                BigInt
+  vehicle_type           String                   @default("Bike") @db.VarChar(255)
+  vehicle_number         String?                  @db.VarChar(255)
+  license_number         String?                  @db.VarChar(255)
+  rating                 Decimal                  @default(0) @db.Decimal(3, 2)
+  total_deliveries       Int                      @default(0)
+  latitude               Decimal?                 @db.Decimal(10, 7)
+  longitude              Decimal?                 @db.Decimal(10, 7)
+  delivery_radius_km     Int                      @default(5)
+  status                 String                   @default("offline") @db.VarChar(255)
+  created_at             DateTime?                @db.Timestamp(0)
+  updated_at             DateTime?                @db.Timestamp(0)
+  users                  users                    @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "delivery_boy_details_user_id_foreign")
+  delivery_boy_locations delivery_boy_locations[]
+}
+
+model delivery_boy_locations {
+  id                   BigInt               @id @default(autoincrement())
+  delivery_boy_id      BigInt
+  latitude             Decimal              @db.Decimal(10, 7)
+  longitude            Decimal              @db.Decimal(10, 7)
+  last_updated_at      DateTime             @default(now()) @db.Timestamp(0)
+  created_at           DateTime?            @db.Timestamp(0)
+  updated_at           DateTime?            @db.Timestamp(0)
+  delivery_boy_details delivery_boy_details @relation(fields: [delivery_boy_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "delivery_boy_locations_delivery_boy_id_foreign")
+}
+
+model failed_jobs {
+  id         BigInt   @id @default(autoincrement())
+  uuid       String   @unique(map: "failed_jobs_uuid_unique") @db.VarChar(255)
+  connection String
+  queue      String
+  payload    String
+  exception  String
+  failed_at  DateTime @default(now()) @db.Timestamp(0)
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model inventory_items {
+  id                  BigInt           @id @default(autoincrement())
+  shop_id             BigInt
+  product_variant_id  BigInt
+  shop_sku            String?          @db.VarChar(255)
+  mrp                 Decimal?         @db.Decimal(10, 2)
+  selling_price       Decimal          @db.Decimal(10, 2)
+  discount_price      Decimal?         @db.Decimal(10, 2)
+  is_tracked          Boolean          @default(true)
+  stock_quantity      Int              @default(0)
+  low_stock_threshold Int?
+  stock_status        String           @default("in_stock") @db.VarChar(255)
+  stock_type          String           @default("finite") @db.VarChar(255)
+  is_active           Boolean          @default(true)
+  created_at          DateTime?        @db.Timestamp(0)
+  updated_at          DateTime?        @db.Timestamp(0)
+  carts               carts[]
+  product_variants    product_variants @relation(fields: [product_variant_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "inventory_items_product_variant_id_foreign")
+  shops               shops            @relation(fields: [shop_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "inventory_items_shop_id_foreign")
+
+  @@unique([shop_id, product_variant_id], map: "inventory_items_shop_id_product_variant_id_unique")
+}
+
+model job_batches {
+  id             String  @id @db.VarChar(255)
+  name           String  @db.VarChar(255)
+  total_jobs     Int
+  pending_jobs   Int
+  failed_jobs    Int
+  failed_job_ids String
+  options        String?
+  cancelled_at   Int?
+  created_at     Int
+  finished_at    Int?
+}
+
+model jobs {
+  id           BigInt @id @default(autoincrement())
+  queue        String @db.VarChar(255)
+  payload      String
+  attempts     Int    @db.SmallInt
+  reserved_at  Int?
+  available_at Int
+  created_at   Int
+
+  @@index([queue], map: "jobs_queue_index")
+}
+
+model localities {
+  id                 BigInt               @id @default(autoincrement())
+  name               String               @db.VarChar(255)
+  city_id            BigInt
+  created_at         DateTime?            @db.Timestamp(0)
+  updated_at         DateTime?            @db.Timestamp(0)
+  customer_addresses customer_addresses[]
+  cities             cities               @relation(fields: [city_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "localities_city_id_foreign")
+  pincodes           pincodes[]
+}
+
+model migrations {
+  id        Int    @id @default(autoincrement())
+  migration String @db.VarChar(255)
+  batch     Int
+}
+
+model model_has_permissions {
+  permission_id BigInt
+  model_type    String      @db.VarChar(255)
+  model_id      BigInt
+  permissions   permissions @relation(fields: [permission_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "model_has_permissions_permission_id_foreign")
+
+  @@id([permission_id, model_id, model_type])
+  @@index([model_id, model_type], map: "model_has_permissions_model_id_model_type_index")
+}
+
+model model_has_roles {
+  role_id    BigInt
+  model_type String @db.VarChar(255)
+  model_id   BigInt
+  roles      roles  @relation(fields: [role_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "model_has_roles_role_id_foreign")
+
+  @@id([role_id, model_id, model_type])
+  @@index([model_id, model_type], map: "model_has_roles_model_id_model_type_index")
+}
+
+model otps {
+  id         BigInt    @id @default(autoincrement())
+  user_id    BigInt
+  otp        String    @db.VarChar(10)
+  expires_at DateTime  @db.Timestamp(0)
+  used       Boolean   @default(false)
+  created_at DateTime? @db.Timestamp(0)
+  updated_at DateTime? @db.Timestamp(0)
+  users      users     @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "otps_user_id_foreign")
+
+  @@index([user_id, otp], map: "otps_user_id_otp_index")
+}
+
+model password_reset_tokens {
+  email      String    @id @db.VarChar(255)
+  token      String    @db.VarChar(255)
+  created_at DateTime? @db.Timestamp(0)
+}
+
+model permissions {
+  id                    BigInt                  @id @default(autoincrement())
+  name                  String                  @db.VarChar(255)
+  guard_name            String                  @db.VarChar(255)
+  created_at            DateTime?               @db.Timestamp(0)
+  updated_at            DateTime?               @db.Timestamp(0)
+  model_has_permissions model_has_permissions[]
+  role_has_permissions  role_has_permissions[]
+
+  @@unique([name, guard_name], map: "permissions_name_guard_name_unique")
+}
+
+model pincodes {
+  id                 BigInt               @id @default(autoincrement())
+  locality_id        BigInt
+  pincode            String               @db.VarChar(10)
+  is_serviceable     Boolean              @default(true)
+  created_at         DateTime?            @db.Timestamp(0)
+  updated_at         DateTime?            @db.Timestamp(0)
+  customer_addresses customer_addresses[]
+  localities         localities           @relation(fields: [locality_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "pincodes_locality_id_foreign")
+}
+
+model product_variant_attribute_values {
+  id                 BigInt     @id @default(autoincrement())
+  product_variant_id BigInt
+  attribute_id       BigInt
+  value              String     @db.VarChar(255)
+  created_at         DateTime?  @db.Timestamp(0)
+  updated_at         DateTime?  @db.Timestamp(0)
+  attributes         attributes @relation(fields: [attribute_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "product_variant_attribute_values_attribute_id_foreign")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model product_variants {
+  id              BigInt            @id @default(autoincrement())
+  product_id      BigInt
+  name            String            @db.VarChar(255)
+  sku             String            @unique(map: "product_variants_sku_unique") @db.VarChar(255)
+  images          Json?             @db.Json
+  weight          Decimal?          @db.Decimal(8, 3)
+  volume          Decimal?          @db.Decimal(8, 3)
+  barcode         String?           @db.VarChar(255)
+  hsn_code        String?           @db.VarChar(255)
+  gst_percentage  Decimal?          @db.Decimal(5, 2)
+  is_active       Boolean           @default(true)
+  created_at      DateTime?         @db.Timestamp(0)
+  updated_at      DateTime?         @db.Timestamp(0)
+  inventory_items inventory_items[]
+  products        products          @relation(fields: [product_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "product_variants_product_id_foreign")
+}
+
+model products {
+  id               BigInt             @id @default(autoincrement())
+  name             String             @db.VarChar(255)
+  category_id      BigInt
+  slug             String             @unique(map: "products_slug_unique") @db.VarChar(255)
+  brand            String?            @db.VarChar(255)
+  unit             String?            @db.VarChar(255)
+  description      String?
+  image            String?            @db.VarChar(255)
+  gallery          Json?              @db.Json
+  is_active        Boolean            @default(true)
+  is_featured      Boolean            @default(false)
+  created_at       DateTime?          @db.Timestamp(0)
+  updated_at       DateTime?          @db.Timestamp(0)
+  product_reviews  product_reviews[]
+  product_variants product_variants[]
+  categories       categories         @relation(fields: [category_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "products_category_id_foreign")
+}
+
+model refresh_tokens {
+  id         BigInt    @id @default(autoincrement())
+  user_id    BigInt
+  token      String
+  device     String?   @db.VarChar(100)
+  ip_address String?   @db.VarChar(45)
+  user_agent String?
+  status     String    @default("active") @db.VarChar(20)
+  expires_at DateTime  @db.Timestamp(0)
+  created_at DateTime? @db.Timestamp(0)
+  updated_at DateTime? @db.Timestamp(0)
+  users      users     @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "refresh_tokens_user_id_foreign")
+}
+
+model role_has_permissions {
+  permission_id BigInt
+  role_id       BigInt
+  permissions   permissions @relation(fields: [permission_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "role_has_permissions_permission_id_foreign")
+  roles         roles       @relation(fields: [role_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "role_has_permissions_role_id_foreign")
+
+  @@id([permission_id, role_id])
+}
+
+model roles {
+  id                   BigInt                 @id @default(autoincrement())
+  name                 String                 @db.VarChar(255)
+  guard_name           String                 @db.VarChar(255)
+  created_at           DateTime?              @db.Timestamp(0)
+  updated_at           DateTime?              @db.Timestamp(0)
+  model_has_roles      model_has_roles[]
+  role_has_permissions role_has_permissions[]
+
+  @@unique([name, guard_name], map: "roles_name_guard_name_unique")
+}
+
+model sessions {
+  id            String  @id @db.VarChar(255)
+  user_id       BigInt?
+  ip_address    String? @db.VarChar(45)
+  user_agent    String?
+  payload       String
+  last_activity Int
+
+  @@index([last_activity], map: "sessions_last_activity_index")
+  @@index([user_id], map: "sessions_user_id_index")
+}
+
+model shop_types {
+  id                  BigInt                @id @default(autoincrement())
+  name                String                @unique(map: "shop_types_name_unique") @db.VarChar(255)
+  slug                String                @unique(map: "shop_types_slug_unique") @db.VarChar(255)
+  created_at          DateTime?             @db.Timestamp(0)
+  updated_at          DateTime?             @db.Timestamp(0)
+  category_shop_type  category_shop_type[]
+  category_shop_types category_shop_types[]
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model shops {
+  id              BigInt            @id @default(autoincrement())
+  vendor_id       BigInt
+  name            String            @db.VarChar(255)
+  slug            String            @unique(map: "shops_slug_unique") @db.VarChar(255)
+  phone           String?           @db.VarChar(255)
+  description     String?
+  address_line    String?           @db.VarChar(255)
+  country         String            @default("1") @db.VarChar(255)
+  city            String?           @db.VarChar(255)
+  state           String?           @db.VarChar(255)
+  pincode         String?           @db.VarChar(255)
+  latitude        Decimal?          @db.Decimal(10, 7)
+  longitude       Decimal?          @db.Decimal(10, 7)
+  logo            String?           @db.VarChar(255)
+  banner          String?           @db.VarChar(255)
+  gst_number      String?           @db.VarChar(255)
+  shop_license    String?           @db.VarChar(255)
+  is_active       Boolean           @default(false)
+  is_open         Boolean           @default(true)
+  status          String            @default("pending") @db.VarChar(255)
+  commission_rate Decimal?          @db.Decimal(5, 2)
+  rating          Decimal           @default(0) @db.Decimal(3, 2)
+  total_reviews   Int               @default(0)
+  created_at      DateTime?         @db.Timestamp(0)
+  updated_at      DateTime?         @db.Timestamp(0)
+  deleted_at      DateTime?         @db.Timestamp(0)
+  carts           carts[]
+  category_shop   category_shop[]
+  inventory_items inventory_items[]
+  product_reviews product_reviews[]
+  vendor_details  vendor_details    @relation(fields: [vendor_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "shops_vendor_id_foreign")
+}
+
+model states {
+  id                 BigInt               @id @default(autoincrement())
+  name               String               @db.VarChar(255)
+  code               String?              @db.VarChar(255)
+  country_id         BigInt
+  created_at         DateTime?            @db.Timestamp(0)
+  updated_at         DateTime?            @db.Timestamp(0)
+  cities             cities[]
+  customer_addresses customer_addresses[]
+  countries          countries            @relation(fields: [country_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "states_country_id_foreign")
+}
+
+model users {
+  id                   BigInt                 @id @default(autoincrement())
+  name                 String                 @db.VarChar(255)
+  email                String                 @unique(map: "users_email_unique") @db.VarChar(255)
+  email_verified_at    DateTime?              @db.Timestamp(0)
+  password             String                 @db.VarChar(255)
+  remember_token       String?                @db.VarChar(100)
+  created_at           DateTime?              @db.Timestamp(0)
+  updated_at           DateTime?              @db.Timestamp(0)
+  phone                String?                @db.VarChar(255)
+  carts                carts[]
+  customer_details     customer_details[]
+  delivery_boy_details delivery_boy_details[]
+  otps                 otps[]
+  product_reviews      product_reviews[]
+  refresh_tokens       refresh_tokens[]
+  vendor_details       vendor_details[]
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model vendor_details {
+  id                  BigInt    @id @default(autoincrement())
+  user_id             BigInt
+  business_name       String?   @db.VarChar(255)
+  gst_number          String?   @db.VarChar(255)
+  pan_number          String?   @db.VarChar(255)
+  business_license    String?   @db.VarChar(255)
+  alternate_phone     String?   @db.VarChar(255)
+  alternate_email     String?   @db.VarChar(255)
+  bank_account_number String?   @db.VarChar(255)
+  bank_name           String?   @db.VarChar(255)
+  ifsc_code           String?   @db.VarChar(255)
+  upi_id              String?   @db.VarChar(255)
+  commission_rate     Decimal   @default(10) @db.Decimal(5, 2)
+  status              String    @default("pending") @db.VarChar(255)
+  created_at          DateTime? @db.Timestamp(0)
+  updated_at          DateTime? @db.Timestamp(0)
+  shops               shops[]
+  users               users     @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "vendor_details_user_id_foreign")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model product_reviews {
+  id                   BigInt    @id @default(autoincrement())
+  user_id              BigInt
+  shop_id              BigInt
+  product_id           BigInt
+  rating               Decimal   @db.Decimal(2, 1)
+  comment              String?
+  is_verified_purchase Boolean   @default(false)
+  images               Json?     @db.Json
+  created_at           DateTime? @db.Timestamp(0)
+  updated_at           DateTime? @db.Timestamp(0)
+  products             products  @relation(fields: [product_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "product_reviews_product_id_foreign")
+  shops                shops     @relation(fields: [shop_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "product_reviews_shop_id_foreign")
+  users                users     @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "product_reviews_user_id_foreign")
+}
+
+model carts {
+  id                BigInt          @id @default(autoincrement())
+  user_id           BigInt
+  shop_id           BigInt
+  inventory_item_id BigInt
+  quantity          Int             @default(1)
+  created_at        DateTime?       @db.Timestamp(0)
+  updated_at        DateTime?       @db.Timestamp(0)
+  inventory_items   inventory_items @relation(fields: [inventory_item_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "carts_inventory_item_id_foreign")
+  shops             shops           @relation(fields: [shop_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "carts_shop_id_foreign")
+  users             users           @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "carts_user_id_foreign")
+
+  @@unique([user_id, inventory_item_id], map: "carts_user_id_inventory_item_id_unique")
+}

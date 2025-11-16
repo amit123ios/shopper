@@ -1,2 +1,1 @@
-# shopper
-This is for the shopper backend
+project for online shoping from local market shops
